@@ -1,0 +1,115 @@
+version: 1
+formatters:
+  standard:
+    format: '%(asctime)s [%(correlation_id)s] %(name)s - %(levelname)s - %(message)s'
+  kafka:
+    format: '{"version": "1.0", "log_type": "%(name)s", "app_type": "microtoolkit", "app_name": "${APP_NAME}", %(message)s}'
+  email:
+    format: "Time: {asctime}\r\nCorrelation ID: {correlation_id}\r\n\r\n{message}"
+    style: '{'
+filters:
+  context_filter:
+    "()": bird.logging.filter.ContextFilter
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: DEBUG
+    formatter: standard
+    filters:
+      - context_filter
+    stream: ext://sys.stdout
+  console_kafka:
+    class: logging.StreamHandler
+    level: INFO
+    formatter: kafka
+    stream: ext://sys.stdout
+  file:
+    class: bird.logging.handler.MaTimedRotatingFileHandler
+    level: DEBUG
+    formatter: standard
+    filters:
+      - context_filter
+    filename: ${APP_HOME}/logs/${APP_NAME}-${HOSTNAME}.log
+    backupCount: 168
+  file_metrics:
+    class: bird.logging.handler.MaTimedRotatingFileHandler
+    level: INFO
+    formatter: kafka
+    filename: ${APP_HOME}/logs/metrics/${APP_NAME}-metrics-${HOSTNAME}.log
+    filtered_routes:
+      - /${APP_NAME}-micro/${APP_CONTEXT_VERSION}/heartbeat
+      - /${APP_NAME}-micro/heartbeat
+    backupCount: 168
+  file_transactions:
+    class: bird.logging.handler.MaTimedRotatingFileHandler
+    level: INFO
+    formatter: kafka
+    filename: ${APP_HOME}/logs/transactions/${APP_NAME}-transactions-${HOSTNAME}.log
+    backupCount: 168
+  file_alerts:
+    class: bird.logging.handler.MaTimedRotatingFileHandler
+    level: INFO
+    formatter: kafka
+    filename: ${APP_HOME}/logs/alerts/${APP_NAME}-alerts-${HOSTNAME}.log
+    backupCount: 168
+  kafka_metrics:
+    class: bird.logging.handler.KafkaFilteredLoggingHandler
+    level: INFO
+    formatter: kafka
+    filtered_routes:
+      - /${APP_NAME}-micro/${APP_CONTEXT_VERSION}/heartbeat
+      - /${APP_NAME}-micro/heartbeat
+    topic: ${KAFKA_METRICS_TOPIC}
+    hosts: ${KAFKA_METRICS_HOSTS}
+  kafka_transactions:
+    class: bird.logging.handler.KafkaLoggingHandler
+    level: INFO
+    formatter: kafka
+    topic: ${KAFKA_TRANSACTIONS_TOPIC}
+    hosts: ${KAFKA_TRANSACTIONS_HOSTS}
+  kafka_alerts:
+    class: bird.logging.handler.KafkaLoggingHandler
+    level: INFO
+    formatter: kafka
+    topic: ${KAFKA_ALERTS_TOPIC}
+    hosts: ${KAFKA_ALERTS_HOSTS}
+  email:
+    class: bird.logging.handler.EnvSMTPHandler
+    level: ERROR
+    formatter: email
+    filters:
+      - context_filter
+    mailhost: dagmail.maeagle.corp
+    fromaddr: pythonapi@bird.com
+    toaddrs: ${APP_EMAIL_RECIPIENT}
+    subject: ${APP_NAME} API Error
+loggers:
+  # module
+  __main__:
+    level: ${LOGGER_LEVEL:-INFO}
+    handlers: [console, file]
+    propagate: no
+  bird:
+    level: ${LOGGER_LEVEL:-INFO}
+    handlers: [console, email, file]
+    propagate: no
+  # manually named
+  alert:
+    level: ${LOGGER_LEVEL:-INFO}
+    handlers: [console_kafka, file_alerts, kafka_alerts]
+    propagate: no
+  metrics:
+    level: ${LOGGER_LEVEL:-INFO}
+    handlers: [console_kafka, file_metrics, kafka_metrics]
+    propagate: no
+  rest_logger:
+    level: ${LOGGER_LEVEL:-INFO}
+    handlers: [console, file]
+    propagate: no
+  transaction:
+    level: ${LOGGER_LEVEL:-INFO}
+    handlers: [console_kafka, file_transactions, kafka_transactions]
+    propagate: no
+root:
+  level: ${LOGGER_LEVEL:-INFO}
+  handlers: [console, email, file]

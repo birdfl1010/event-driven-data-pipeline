@@ -1,0 +1,5 @@
+msa-data-access>=3.1.0,<=3.99.999
+msa-logging>=3.1.0,<=3.99.999
+msa-utilities>=3.1.0,<=3.99.999
+msa-jobs>=3.1.0,<=3.99.999
+kafka-python>=2.0.1
