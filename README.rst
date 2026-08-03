@@ -1,6 +1,7 @@
 =======================
 Vendor Rewards Processor
 =======================
+Enterprise event-driven integration platform connecting Rocket UniVerse (MultiValue/PICK) systems with modern downstream applications using Kafka and Python.
 
 # event-driven-data-pipeline
 Event-driven data processing platform using Kafka and Python to enable real-time system integration and workflow orchestration.
